@@ -212,6 +212,22 @@
 				"type": "object",
 				"additionalProperties": false
 			},
+			"AttachmentModel": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"mimeType": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"mimeType"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
 			"Profile": {
 				"properties": {
 					"bio": {
@@ -224,6 +240,150 @@
 						"type": "string"
 					}
 				},
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Post": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"userId": {
+						"type": "string"
+					},
+					"text": {
+						"type": "string"
+					},
+					"type": {
+						"$ref": "#/components/schemas/PostType"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"attachmentId": {
+						"type": "string"
+					}
+				},
+				"required": [
+					"id",
+					"userId",
+					"text",
+					"type",
+					"createdAt",
+					"updatedAt"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PostsResponse": {
+				"properties": {
+					"remainingCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"remainingPages": {
+						"type": "number",
+						"format": "double"
+					},
+					"count": {
+						"type": "number",
+						"format": "double"
+					},
+					"posts": {
+						"items": {
+							"$ref": "#/components/schemas/Post"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"remainingCount",
+					"remainingPages",
+					"count",
+					"posts"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"Reaction": {
+				"properties": {
+					"id": {
+						"type": "string"
+					},
+					"userId": {
+						"type": "string"
+					},
+					"postId": {
+						"type": "string"
+					},
+					"type": {
+						"$ref": "#/components/schemas/ReactionType"
+					}
+				},
+				"required": [
+					"id",
+					"userId",
+					"postId",
+					"type"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"ReactionsResponse": {
+				"properties": {
+					"remainingCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"remainingPages": {
+						"type": "number",
+						"format": "double"
+					},
+					"count": {
+						"type": "number",
+						"format": "double"
+					},
+					"reactions": {
+						"items": {
+							"$ref": "#/components/schemas/Reaction"
+						},
+						"type": "array"
+					}
+				},
+				"required": [
+					"remainingCount",
+					"remainingPages",
+					"count",
+					"reactions"
+				],
+				"type": "object",
+				"additionalProperties": false
+			},
+			"PostStatsResponse": {
+				"properties": {
+					"reactionCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"replyCount": {
+						"type": "number",
+						"format": "double"
+					},
+					"repostCount": {
+						"type": "number",
+						"format": "double"
+					}
+				},
+				"required": [
+					"reactionCount",
+					"replyCount",
+					"repostCount"
+				],
 				"type": "object",
 				"additionalProperties": false
 			}
@@ -498,6 +658,121 @@
 				]
 			}
 		},
+		"/api/v1/posts/{postId}": {
+			"patch": {
+				"operationId": "attachToPost",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/AttachmentModel"
+								}
+							}
+						}
+					},
+					"201": {
+						"description": ""
+					},
+					"404": {
+						"description": "Post not found"
+					},
+					"500": {
+						"description": "Could not attach photo to post"
+					}
+				},
+				"description": "Attaches a photo to a post or a reply. Will throw an error if\r\nthe post is a repost (post.type == post | reply)\r\nCan attach at most once. Once a photo is attached,\r\nit cannot be changed or deleted.",
+				"tags": [
+					"Posts"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "postId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			},
+			"delete": {
+				"operationId": "deletePost",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PostModel"
+								}
+							}
+						}
+					},
+					"404": {
+						"description": "post not found"
+					}
+				},
+				"tags": [
+					"Posts"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "postId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v1/posts/attachment/{postId}": {
+			"get": {
+				"operationId": "getPostAttachment",
+				"responses": {
+					"200": {
+						"description": ""
+					},
+					"204": {
+						"description": "No content"
+					},
+					"404": {
+						"description": "photo not found"
+					}
+				},
+				"tags": [
+					"Posts"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "postId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/api/v1/profile/info/{userId}": {
 			"get": {
 				"operationId": "getProfile",
@@ -643,6 +918,269 @@
 					{
 						"in": "path",
 						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
+		"/api/v1/query/posts": {
+			"get": {
+				"operationId": "queryPosts",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PostsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"description": "Retrieves posts with given parameters, with pagination.",
+				"tags": [
+					"Queries"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "userId",
+						"required": false,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "resultsPerPage",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "type",
+						"required": false,
+						"schema": {
+							"$ref": "#/components/schemas/PostType"
+						}
+					}
+				]
+			}
+		},
+		"/api/v1/query/replies/{postId}": {
+			"get": {
+				"operationId": "getReplies",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PostsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"tags": [
+					"Queries"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "postId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "resultsPerPage",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/api/v1/query/reactions/{userId}": {
+			"get": {
+				"operationId": "getReactions",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ReactionsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"tags": [
+					"Queries"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "userId",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					},
+					{
+						"in": "query",
+						"name": "resultsPerPage",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/api/v1/query/reactions": {
+			"get": {
+				"operationId": "getCurrentUserReactions",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/ReactionsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"tags": [
+					"Queries"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "query",
+						"name": "resultsPerPage",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					},
+					{
+						"in": "query",
+						"name": "page",
+						"required": false,
+						"schema": {
+							"format": "double",
+							"type": "number"
+						}
+					}
+				]
+			}
+		},
+		"/api/v1/query/stats/{postId}": {
+			"get": {
+				"operationId": "getPostStats",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"$ref": "#/components/schemas/PostStatsResponse"
+								}
+							}
+						}
+					},
+					"401": {
+						"description": "Unauthorized"
+					}
+				},
+				"tags": [
+					"Queries"
+				],
+				"security": [
+					{
+						"jwt": []
+					}
+				],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "postId",
 						"required": true,
 						"schema": {
 							"type": "string"

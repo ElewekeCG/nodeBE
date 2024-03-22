@@ -5,7 +5,9 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   OperationId,
+  Patch,
   Path,
   Post,
   Request,
@@ -15,9 +17,13 @@ import {
   Tags,
 } from "tsoa";
 
-import { Request as ExpressRequest } from "express";
+import { 
+  Request as ExpressRequest, 
+  Response as ExpressResponse,
+} from "express";
 import AuthenticatedUser from "../middleware/models/authenticated-user";
 import {
+  Attachment as AttachmentModel,
   CreatePostParams,
   CreateReactionParams,
   Post as PostModel,
@@ -72,6 +78,65 @@ export class PostsController extends Controller {
     const user = request.user as AuthenticatedUser;
     const userId = user.id;
     return new PostsService().unreactToPost(userId, postId);
+  }
+
+  
+  /**
+   * Attaches a photo to a post or a reply. Will throw an error if
+   * the post is a repost (post.type == post | reply)
+   * Can attach at most once. Once a photo is attached,
+   * it cannot be changed or deleted.
+   */
+  @Patch("/{postId}")
+  @OperationId("attachToPost")
+  @Security("jwt")
+  @Response(StatusCodes.CREATED)
+  @Response(StatusCodes.INTERNAL_SERVER_ERROR, "Could not attach photo to post")
+  @Response(StatusCodes.NOT_FOUND, "Post not found")
+  public async attachToPost(
+    @Path() postId: string,
+    @Request() request: ExpressRequest
+  ): Promise<AttachmentModel> {
+    const user = request.user as AuthenticatedUser;
+    const userId = user.id;
+    return new PostsService().attachToPost(userId, postId, request as any);
+  }
+
+  // getting an attachment from a post
+  @Response(StatusCodes.OK)
+  @Response(StatusCodes.NOT_FOUND, "photo not found")
+  @Get("/attachment/{postId}")
+  @OperationId("getPostAttachment")
+  @Security("jwt")
+  public async getPostAttachment(
+    @Path() postId: string,
+    @Request() request: ExpressRequest
+  ): Promise<void> {
+    const photoInfo = await new PostsService().getPostAttachment(postId);
+    const response = request.res as ExpressResponse;
+    return new Promise<void>((resolve, reject) => {
+      response.sendFile(photoInfo.photoName, photoInfo.options, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    });
+  }
+
+  @Delete("/{postId}")
+  @OperationId("deletePost")
+  @Security("jwt")
+  @Response(StatusCodes.OK, "Post deleted")
+  @Response(StatusCodes.NOT_FOUND, "post not found")
+  public async deletePost(
+    @Path() postId: string,
+    @Request() request: ExpressRequest
+  ): Promise<PostModel> {
+    const user = request.user as AuthenticatedUser;
+    const userId = user.id;
+    return new PostsService().deletePost(userId, postId);
   }
 }
 
